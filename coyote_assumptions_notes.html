@@ -35,6 +35,10 @@
   .foot{color:var(--muted);font-size:.9rem;margin-top:2.4rem}
   a{color:var(--green)}
   body{overflow-wrap:break-word;overflow-x:hidden}
+  .howto{background:#fff;border:1px solid var(--rule);border-left:4px solid var(--green);border-radius:0 10px 10px 0;padding:.6rem 1rem .8rem;margin:1rem 0}
+  .howto h4{font-family:var(--sans,-apple-system),"Segoe UI",sans-serif;font-size:.98rem;color:var(--green);margin:.3rem 0 .4rem;font-weight:800}
+  .howto ol,.howto ul{margin:.3rem 0;padding-left:1.2rem}
+  .howto .sub{font-family:-apple-system,"Segoe UI",sans-serif;font-size:.85rem;color:var(--muted)}
   @media(max-width:600px){.wrap{padding:30px 17px 64px}h1{font-size:1.5rem}h2{margin-top:1.9rem}}
 </style>
 </head>
@@ -77,6 +81,26 @@
   <li><b class="fix">Pair it with a distributional Model B (quantiles).</b> Swap MSE for a <b>quantile / pinball loss</b> so Model B predicts the <em>distribution</em> of remaining yards (τ0.1 floor … τ0.9 upside), not just the mean. Combined with ghost-sampling, COYOTE can then measure a player’s effect on the <b>tails</b> — i.e. <b>who tilts the probability of an explosive return</b> — the boom/bust signal the point-estimate version averages away.</li>
   <li><b>How the field actually did it (prior art):</b> <b>Yurko et&nbsp;al. — “NFL&nbsp;Ghosts” (2024)</b> use <b>random-forest conditional density estimation (RFCDE)</b> to model a full <em>2D distribution</em> of where the baseline (“ghost”) defender should be — plus a second density for receiver yards — then grade a real defender by <b>integrating the value model over that ghost density</b> (<code>E[V]</code>, not <code>V(mean)</code>). <b>Ferraz — “Ghostbusters” (Big Data Bowl 2026 winner)</b> applies the same distributional-ghost idea to defenders <b>while the ball is in the air</b>, scoring coverage by comparing actual movement to a <em>distribution</em> of expected ghost positions. So the ladder is: <b>COYOTE = the cheap end</b> (point ghost + mean) → <b>Yurko / Ferraz = the distributional upgrade</b> → a <em>reactive</em> ghost (others respond) is the rung above both.</li>
 </ul>
+
+<div class="howto">
+<h4>But Model A outputs 5 numbers — how do you get a <em>distribution</em> out of that?</h4>
+<p>The 5 outputs (Δx, Δy, accel, x-vel, y-vel) are just the predicted <b>mean</b> — one point. The <em>count</em> of outputs isn't the obstacle; you change what the head <b>emits</b> (and the loss). Cheapest → richest:</p>
+<ul>
+  <li><b>Re-head to a Gaussian.</b> Instead of "the next position," output its <b>parameters</b>: a mean <em>and</em> a spread per coordinate — e.g. μ<sub>x</sub>, μ<sub>y</sub>, σ<sub>x</sub>, σ<sub>y</sub> (+ correlation ρ). Train with <b>Gaussian negative-log-likelihood</b> instead of MSE, then <b>sample</b> positions from N(μ, Σ). Your 5 point-outputs simply become distribution parameters.</li>
+  <li><b>Quantile head.</b> Output a few quantiles per coordinate (τ = 0.1 / 0.5 / 0.9) with pinball loss → a spread, no Gaussian assumption.</li>
+  <li><b>Mixture Density Network.</b> Output a <em>mixture</em> of K Gaussians (weights + means + covariances) → captures multimodal futures (a defender could break left <em>or</em> right) a single Gaussian can't.</li>
+  <li><b>Cheapest, no re-head — dropout / ensemble.</b> Keep the point net, run it many times with dropout on (or train a small ensemble); each pass gives a slightly different 5-output → an empirical <b>cloud</b> of ghosts. <span class="sub">(Caveat: that's the model's own uncertainty, not the true play-to-play spread.)</span></li>
+  <li><b>Yurko's actual choice:</b> <b>RFCDE</b> — a random forest that emits a full conditional density directly, with no neural head at all.</li>
+</ul>
+<p style="margin:.5rem 0 .2rem"><b>Then the COYOTE step is identical for all of them:</b></p>
+<ol>
+  <li><b>Sample N ghost next-positions</b> for the player → N ghost field states.</li>
+  <li>Run <b>Model B</b> on each → N expected-yards numbers.</li>
+  <li><b>Average</b> them = <code>E<sub>ghost</sub>[f(Ŝ)]</code> (that's the "integrate"); their <b>spread</b> = the confidence interval.</li>
+  <li><code>COYOTE = f(actual) − E<sub>ghost</sub>[f(Ŝ)]</code>.</li>
+</ol>
+<p class="sub" style="margin:.4rem 0 0">Averaging <em>f</em> over <em>where the player could be</em> — instead of <em>f</em> at one average spot — is exactly what removes the Jensen bias.</p>
+</div>
 
 <h2><span class="n">6.</span> Punts and kickoffs are pooled into one model</h2>
 <ul>
