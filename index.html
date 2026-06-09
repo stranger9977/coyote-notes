@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#004C54">
+<title>COYOTE — interview notes</title>
+<style>
+  :root{--green:#004C54;--ink:#16201f;--muted:#5f6b68;--rule:#e2e6df;--bg:#fffdf7;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--green);color:var(--ink);
+    font:17px/1.55 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;-webkit-font-smoothing:antialiased}
+  .top{padding:44px 22px 30px;color:#eaf2ee;max-width:680px;margin:0 auto}
+  .kick{font-family:-apple-system,"Segoe UI",sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.2em;
+    text-transform:uppercase;color:#9fc0b8;margin:0 0 .6rem}
+  h1{font-family:-apple-system,"Segoe UI",sans-serif;font-size:2.3rem;font-weight:800;letter-spacing:.02em;margin:0;color:#fff}
+  .tag{font-style:italic;color:#cfe0d8;margin:.4rem 0 0}
+  .sheet{background:var(--bg);border-radius:22px 22px 0 0;min-height:64vh;padding:26px 18px 60px;
+    max-width:680px;margin:14px auto 0}
+  a.card{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid var(--rule);
+    border-radius:14px;padding:18px 18px 16px;margin:0 0 14px;transition:transform .12s,box-shadow .12s;
+    box-shadow:0 1px 0 rgba(0,76,84,.04)}
+  a.card:active{transform:scale(.99)}
+  .n{font-family:-apple-system,"Segoe UI",sans-serif;font-size:.72rem;font-weight:700;color:#9aa9a4;letter-spacing:.05em}
+  .h{font-family:-apple-system,"Segoe UI",sans-serif;font-size:1.12rem;font-weight:700;color:var(--green);
+    margin:.15rem 0 .35rem;display:flex;align-items:center;justify-content:space-between}
+  .h .arr{color:#bcd0c9;font-weight:400}
+  .d{font-size:.96rem;line-height:1.45;color:#33403d;margin:0}
+  .foot{color:var(--muted);font-size:.82rem;text-align:center;margin-top:22px;line-height:1.5}
+  @media(max-width:600px){h1{font-size:2rem}}
+</style>
+</head>
+<body>
+  <div class="top">
+    <p class="kick">NFL Big Data Bowl 2022 · interview prep</p>
+    <h1>COYOTE notes</h1>
+    <p class="tag">Counterfactual Yards Over The Expected — the read-on-the-train pack.</p>
+  </div>
+  <div class="sheet">
+    <a class="card" href="coyote_models_explainer.html">
+      <div class="n">01 · HOW IT WORKS</div>
+      <div class="h">Model A, Model B &amp; the COYOTE calc <span class="arr">→</span></div>
+      <p class="d">The whole machine in bullets — the two MLPs, the ghost, and how COYOTE/ret is built frame → return → season.</p>
+    </a>
+    <a class="card" href="coyote_assumptions_notes.html">
+      <div class="n">02 · THE CRITIQUE</div>
+      <div class="h">Assumptions &amp; how I'd fix them <span class="arr">→</span></div>
+      <p class="d">Ordering, frozen field, the 5-nearest &amp; 3-yd thresholds, point-vs-distribution ghosts (Yurko/Ferraz), play-type &amp; role splits.</p>
+    </a>
+    <a class="card" href="coyote_cheatsheet.html">
+      <div class="n">03 · CONCEPTS</div>
+      <div class="h">Cheat sheet (talk smart) <span class="arr">→</span></div>
+      <p class="d">Loss function, ReLU, feed-forward, MLP, transformers &amp; attention, Jensen's inequality, the bar-fight analogy, reliability.</p>
+    </a>
+    <p class="foot">Private study notes · not indexed.<br>after Ian Barnett's COYOTE — reproduced &amp; extended.</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>COYOTE — Concepts cheat sheet (for the train)</title>
+<style>
+  :root{--green:#004C54;--ink:#1a2422;--muted:#5f6b68;--rule:#e2e6df;--bg:#fffdf7;--chipbg:#eef4f0;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:17px/1.6 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:48px 28px 96px}
+  h1{font-size:1.8rem;line-height:1.15;margin:0 0 .2rem;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-style:italic;margin:0 0 1.6rem}
+  .card{border:1px solid var(--rule);border-radius:10px;padding:.7rem 1.1rem 1rem;margin:1.1rem 0;background:#fff}
+  h2{font-family:-apple-system,"Segoe UI",sans-serif;font-size:1.02rem;font-weight:700;color:var(--green);margin:.7rem 0 .2rem}
+  .q h2{color:#7a3b00}
+  .q{background:#fffaf2;border-color:#f0e2cf}
+  ul{margin:.45rem 0 .1rem;padding-left:1.2rem}
+  li{margin:.4rem 0}
+  b,strong{color:#0d1c1a}
+  em{color:#0d3a3e}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:.85em;background:#eef2ec;padding:.05em .35em;border-radius:4px;color:#0d3a3e}
+  .one{font-family:-apple-system,"Segoe UI",sans-serif;font-size:.78rem;font-weight:700;color:var(--green);
+    text-transform:uppercase;letter-spacing:.06em;margin:.1rem 0 .3rem}
+  .num{color:#0d3a3e;font-weight:700;font-variant-numeric:tabular-nums}
+  hr{border:0;border-top:1px solid var(--rule);margin:2rem 0}
+  body{overflow-wrap:break-word}
+  @media(max-width:600px){.wrap{padding:30px 17px 64px}h1{font-size:1.5rem}.card{padding:.6rem .9rem .85rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>COYOTE — concepts cheat sheet</h1>
+<p class="sub">Quick refreshers so I can talk about each intelligently. One or two bullets each.</p>
+
+<div class="card q">
+<h2>Q: The 5 outputs of Model A are continuous — what’s the loss function?</h2>
+<ul>
+  <li><b>MSE — mean squared error</b> (<code>nn.MSELoss</code>), with the <b>Adam</b> optimizer. <em>Both</em> models use it: Model A averages MSE across its 5 continuous outputs (Δx, Δy, accel, x-vel, y-vel); Model B is MSE on expected remaining yards.</li>
+  <li><b>Why MSE:</b> the targets are unbounded continuous numbers; MSE is the natural regression loss — it’s the Gaussian-noise likelihood, so it trains the net to predict the <b>conditional mean</b>. The output layer is <b>linear</b> (no squashing) precisely so it can emit any real number, including negatives.</li>
+  <li><b>The catch to mention:</b> “predicts the mean” means MSE <b>underweights the heavy tail</b> (the big returns). That’s exactly why the upgrade for Model B is a <b>quantile / pinball loss</b> → a whole distribution instead of a point.</li>
+</ul>
+</div>
+
+<hr>
+<div class="card">
+<h2>ReLU (Rectified Linear Unit)</h2>
+<ul>
+  <li><code>ReLU(x) = max(0, x)</code> — passes positives, clamps negatives to 0. It’s the <b>nonlinearity placed between layers</b>. Analogy: a <em>one-way valve</em>.</li>
+  <li><b>Why it’s needed:</b> without a nonlinearity, stacked linear layers collapse into a <em>single</em> linear map — depth would be pointless. ReLU is cheap and doesn’t vanish-gradient for positive inputs.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Linear (identity) activation</h2>
+<ul>
+  <li><b>No activation</b> — the output is just <code>Wx + b</code> passed straight through. Used on the <b>output layer</b> for regression because predictions must be able to be <b>any real number</b> (a ReLU output could never be negative — but velocities and Δx can be).</li>
+  <li>Pattern to remember: <b>hidden layers = ReLU, output layer = linear.</b></li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Feed-forward (FFNN)</h2>
+<ul>
+  <li>Data flows <b>one direction only</b>: input → hidden → output, <b>no loops back</b>. You can read it straight down the <code>forward()</code> method.</li>
+  <li><b>Contrast:</b> RNN/LSTM <em>loop</em> (state feeds back, for sequences); a transformer doesn’t loop but lets tokens <em>attend sideways</em>. Note: “feed-forward” describes the <b>forward pass</b> — training still back-propagates the error <em>backward</em>.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>MLP (multilayer perceptron)</h2>
+<ul>
+  <li>The specific feed-forward net here: <b>fully-connected</b> (<code>nn.Linear</code>) layers + ReLU — every neuron connects to every neuron in the next layer.</li>
+  <li>Both COYOTE nets are MLPs: <b>Model A 42→50→25→10→5</b>, <b>Model B 154→200→100→20→1</b>. The paper’s “FFNN” = the code’s “MLP” — same thing. (The triangle/image CNN in the repo is an <em>abandoned</em> path.)</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Transformer / self-attention — and why it ignores player order</h2>
+<ul>
+  <li>Treats the 22 players as a <b>set of tokens</b>. Each player forms a <b>query, key, value</b> (via shared W<sub>Q</sub>/W<sub>K</sub>/W<sub>V</sub>); attention weight = <code>softmax(query·key)</code> decides <b>who attends to whom</b>, recomputed <em>every frame</em>. It models pairwise interactions <b>explicitly</b>.</li>
+  <li><b>Why order-agnostic:</b> the <em>same</em> weights hit every player (weight-sharing) and pooling is symmetric (mean) → <b>permutation-invariant</b>. Reshuffle the players → identical output. No sort needed; it <b>learns</b> “most relevant” instead of hard-coding “nearest.”</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Weight-sharing &amp; why the transformer beats the FFNN (the nuance)</h2>
+<ul>
+  <li>The FFNN <em>can</em> model interactions (it’s a <b>universal approximator</b>) — the transformer’s edge is <b>inductive bias / sample-efficiency, not raw capability</b>. The FFNN must re-learn the same interaction at every slot, learn the permutation symmetry from data, and untangle a brittle distance-sort; the transformer gets all that <b>for free</b> by reusing one small set of weights across all 22 players (so each player is ~22× the training signal). Analogy: <b>transformer : a set of players :: CNN : an image.</b></li>
+  <li><b>The numbers:</b> original MLP <span class="num">0.639</span> → gradient-boosted trees <span class="num">0.674</span> → transformer <span class="num">0.702</span>. So roughly <b>half the lift is “better model class,”</b> half is <b>“the right structural prior for a set of interacting agents.”</b></li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Bar-fight analogy (the keeper)</h2>
+<ul>
+  <li><b>FFNN bouncer:</b> numbers everyone into fixed clipboard slots by distance to the bar. Re-learns the same headlock once per slot, panics when two people swap order, and his chart <em>thrashes</em> every time anyone moves past anyone — brainpower wasted on bookkeeping.</li>
+  <li><b>Attention bouncer:</b> takes in the whole room at once; each person focuses on whoever actually threatens/helps <em>them</em> right now; recognizes a headlock anywhere; reorder people → same read. Spends all his attention on <b>who’s engaging whom</b>, so he calls the brawl right with far less experience.</li>
+  <li><b>LLM tie-in:</b> the <em>same</em> machine, with words as the “people” and attention deciding which earlier words each word looks at — weight-sharing across positions is what lets it scale to 100k tokens. A sentence is just a tiny “field.”</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Jensen’s inequality — why a single “average” ghost is biased</h2>
+<ul>
+  <li><b>The rule:</b> for a <b>curved (nonlinear)</b> function <code>V</code>, the value of the average input ≠ the average of the values: <code>V(mean) ≠ E[V]</code>. (Convex <code>V</code> → <code>V(mean) ≤ E[V]</code>; concave → the reverse; equal only if <code>V</code> is a straight line.)</li>
+  <li><b>Plain version:</b> <em>averaging first then scoring</em> ≠ <em>scoring lots of possibilities then averaging</em> — whenever the scorer bends.</li>
+  <li><b>Why it bites COYOTE:</b> Model B (expected yards) is <b>nonlinear</b>. The point-ghost plugs in <em>one</em> average position → <code>f(mean ghost)</code>, but the honest counterfactual is the average over <em>where the player could be</em> → <code>E[f(ghost)]</code>. They differ, so the point estimate is <b>systematically biased</b>. Ghosting a <b>distribution</b> and averaging Model B over it computes <code>E[f]</code> directly — the Yurko/Ferraz fix.</li>
+  <li><b>Analogy:</b> a guy who’s “on average at midfield” isn’t worth the value <em>of</em> midfield if he’s sometimes springing a huge block and sometimes whiffing — the average of the outcomes ≠ the outcome of the average.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>“Integrate over the distribution” — what that word means</h2>
+<ul>
+  <li>It just means take a <b>probability-weighted average</b> (an <b>expected value</b>). “Integrate <code>f</code> over the ghost distribution” = consider every possible ghost position, weight it by how likely it is, and sum the values: <code>E[f] = ∫ f(s)·p(s) ds</code>. The ∫ is simply a <b>continuous sum</b>; the takeaway is “<b>average the score across all plausible ghost spots, weighted by probability</b>.”</li>
+  <li><b>In practice you never do the calculus — you sample (Monte Carlo):</b> draw, say, 200 ghost positions from Model A’s distribution, run Model B on each, take the mean. That sample-average ≈ the integral <code>E[f(ghost)]</code>; more samples = tighter estimate, and the <b>spread of those samples is your confidence interval</b>.</li>
+  <li><b>One line:</b> point ghost = <code>f(one position)</code>; integrated = <code>average of f(many sampled positions)</code> — the second is the unbiased one (that’s the Jensen fix above).</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>“Strokes gained” framing for COYOTE itself</h2>
+<ul>
+  <li>COYOTE is <b>strokes-gained for special teams</b>: compare what <em>actually</em> happened to what an <em>average</em> player would do from the same spot, credit the difference, sum it over the play. It turns an unobservable (“how good was that block?”) into a <b>difference of two model predictions</b> — no block-grading labels needed.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Pre-catch vs post-catch (don’t confuse with train/inference)</h2>
+<ul>
+  <li>It’s a <b>per-model training-data</b> thing, not train-vs-inference. <b>Model A trains on pre-catch</b> frames; <b>Model B trains on post-catch</b> frames (its target, “remaining return yards,” only exists during the return). <b>At inference both run post-catch</b> — COYOTE is only computed on the return.</li>
+  <li>Wrinkle to flag: Model A is trained pre-catch but <em>applied</em> post-catch — a mild train/serve mismatch.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Holdout vs the metric &amp; split-half reliability</h2>
+<ul>
+  <li><b>Model accuracy</b> (corr/MAE, the 0.64→0.70 numbers) is measured on a <b>holdout</b> test set. But <b>COYOTE/ret is computed on all the data</b>, not a holdout — there’s <b>no ground-truth label</b> for “true blocking value,” so you can’t holdout-test the ratings.</li>
+  <li>Instead you check <b>reliability:</b> split each player’s returns in half, correlate the two halves → does the metric reproduce itself? <b>Original MLP ≈ 0.1</b> (mostly noise) vs <b>transformer ≈ 0.4</b> (moderate). Strong line: <em>“they validated the model but never validated the metric — and when you do, the original ratings are quite noisy.”</em> Could tighten further with <b>out-of-fold (cross-fit) COYOTE.</b></li>
+</ul>
+</div>
+
+</div>
+</body>
+</html>

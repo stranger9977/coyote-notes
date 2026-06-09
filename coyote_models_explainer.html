@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>COYOTE — How Model A, Model B & the COYOTE calculation work</title>
+<style>
+  :root{--green:#004C54;--ink:#1a2422;--muted:#5f6b68;--rule:#e2e6df;--bg:#fffdf7;--chipbg:#eef4f0;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:17px/1.6 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:48px 28px 96px}
+  h1{font-size:1.8rem;line-height:1.15;margin:0 0 .2rem;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-style:italic;margin:0 0 1.6rem}
+  .card{border:1px solid var(--rule);border-radius:10px;padding:.8rem 1.15rem 1.05rem;margin:1.2rem 0;background:#fff}
+  h2{font-family:-apple-system,"Segoe UI",sans-serif;font-size:1.06rem;font-weight:700;color:var(--green);margin:.5rem 0 .1rem}
+  .role{font-family:-apple-system,"Segoe UI",sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--muted);margin:.1rem 0 .5rem}
+  ul{margin:.45rem 0 .1rem;padding-left:1.2rem}
+  li{margin:.42rem 0}
+  li ul{margin:.3rem 0}
+  b,strong{color:#0d1c1a}
+  em{color:#0d3a3e}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:.85em;background:#eef2ec;padding:.05em .35em;border-radius:4px;color:#0d3a3e}
+  .arch{font-family:ui-monospace,Menlo,monospace;font-size:.84rem;background:#0d2b2e;color:#cfe6e2;
+    padding:.5rem .8rem;border-radius:7px;display:block;margin:.2rem 0 .5rem;letter-spacing:.02em;
+    line-height:1.7;overflow-wrap:break-word}
+  .formula{background:var(--chipbg);border-left:3px solid var(--green);border-radius:0 8px 8px 0;
+    padding:.6rem .95rem;margin:.7rem 0;font-size:1rem}
+  .formula code{background:none;font-size:1em;color:#0d2b2e}
+  .pill{display:inline-block;font-family:-apple-system,"Segoe UI",sans-serif;font-size:.66rem;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--green);background:var(--chipbg);border-radius:999px;
+    padding:.16em .65em;margin-left:.4em;vertical-align:.12em}
+  hr{border:0;border-top:1px solid var(--rule);margin:2rem 0}
+  body{overflow-wrap:break-word}
+  @media(max-width:600px){.wrap{padding:30px 17px 64px}h1{font-size:1.5rem}.card{padding:.7rem .9rem .9rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>How Model A, Model B &amp; the COYOTE calculation work</h1>
+<p class="sub">The whole machine in bullets: Model&nbsp;A builds the “ghost,” Model&nbsp;B scores the field, COYOTE is the gap.</p>
+
+<div class="card">
+<h2>Model A <span class="pill">the movement / “ghost” model</span></h2>
+<p class="role">Predicts what an <em>average</em> player would do next</p>
+<div class="arch">MLP &nbsp; 42 → 50 → 25 → 10 → 5 &nbsp;·&nbsp; ReLU hidden, linear output &nbsp;·&nbsp; MSE + Adam</div>
+<ul>
+  <li><b>Job:</b> given the field <em>now</em>, predict where a player will be in the next <b>0.1 s</b> (Δt) — but trained to capture the <b>average</b> player, so it answers “what would a <em>typical</em> NFL player do here?”</li>
+  <li><b>Inputs (42):</b> for the <b>target player</b> — x-velocity, y-velocity, acceleration, distance travelled last frame (4); for each of the <b>5 nearest players</b> — those same features + relative x/y to the target + a same-team flag (7 each = 35); plus the <b>ball’s</b> relative x/y and a return-team indicator (3). The 5 neighbours are listed <b>sorted nearest→furthest</b>.</li>
+  <li><b>Outputs (5):</b> the target player’s next-frame <b>Δx, Δy, acceleration, x-velocity, y-velocity</b> — all continuous, hence the linear output layer.</li>
+  <li><b>Why it’s “average”:</b> it’s trained over <b>every player on every return in a season</b>, so it learns generic behaviour, not any one player’s style. That’s deliberate — it’s the <b>yardstick</b> the real player is measured against.</li>
+  <li><b>How it’s used:</b> run it on the players to <b>roll the field forward 0.1 s</b> → the <b>expected (“ghost”) field state</b>. (Trained on pre-catch frames; applied during the return.)</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Model B <span class="pill">the value model</span></h2>
+<p class="role">Scores how good a field state is for the return</p>
+<div class="arch">MLP &nbsp; 154 → 200 → 100 → 20 → 1 &nbsp;·&nbsp; ReLU hidden, linear output &nbsp;·&nbsp; MSE + Adam</div>
+<ul>
+  <li><b>Job:</b> given a full field state, predict the <b>expected remaining return yards</b> — how far the returner will still gain from this moment (assuming no penalty/turnover). Call it <code>f(S)</code> for field state <code>S</code>.</li>
+  <li><b>Inputs (154):</b> the <b>whole field</b> — the ball carrier’s features plus <b>all 21 other players</b>, each as position / velocity / acceleration <b>relative to the ball</b> + a team indicator, again <b>sorted by distance to the ball</b>. (2 ball-to-carrier + 5 carrier + 21×7 others = 154.)</li>
+  <li><b>Output (1):</b> a single number — expected remaining return yards.</li>
+  <li><b>Trained on:</b> post-catch frames (the return itself); it also trains on the <b>ghost fields</b> as extra examples, so it’s comfortable scoring counterfactual states too.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>The COYOTE calculation <span class="pill">per frame → per return → per season</span></h2>
+<p class="role">Actual field minus average-player field, summed up</p>
+<ul>
+  <li><b>One frame, one player:</b> take the <b>actual</b> field <code>S</code>. Build a counterfactual field <code>Ŝ</code> = the same field, but the target player (and anyone in his <b>3-yd halo</b>) is moved to where <b>Model A</b> says an average player would be. Then:</li>
+</ul>
+<div class="formula"><code>COYOTE<sub>k,t</sub> = f(S<sub>k,t</sub>) − f(Ŝ<sub>k,t</sub>)</code> &nbsp; — the expected return yards his real positioning <em>added</em> vs. an average player, on that 0.1 s frame.</div>
+<ul>
+  <li><b>Sign fix:</b> multiply by <b>−1 for kicking-team players</b>, so <b>positive = above-average</b> for everyone (offense and coverage).</li>
+  <li><b>Off-ball filter:</b> COYOTE is set to <b>0 when the player is within 3 yds of the ball carrier</b> (so it never credits the carry/tackle itself — it stays a blocking/coverage metric), and zeroed for extreme-outlier swaps.</li>
+  <li><b>One return:</b> <b>sum</b> the player’s per-frame COYOTE across every 0.1 s frame of that return → his total COYOTE for the return.</li>
+  <li><b>One season:</b> <b>average</b> those per-return totals over all returns he played in (<b>≥10</b> returns to qualify) → <b>COYOTE/ret</b>, the leaderboard stat.</li>
+</ul>
+<div class="formula"><code>COYOTE/ret = (1/K) · Σ<sub>k=1..K</sub> Σ<sub>t∈T<sub>k</sub></sub> COYOTE<sub>k,t</sub></code> &nbsp; — K = returns the player was in; T<sub>k</sub> = the frames of return k.</div>
+<ul>
+  <li><b>Read it as:</b> “if this player were swapped for an average NFL player in his spot, his team would gain <b>X fewer (or more) return yards per return</b>, on average.”</li>
+  <li><b>The one-liner:</b> it’s <b>strokes-gained for special teams</b> — actual minus average, accumulated over the play.</li>
+</ul>
+</div>
+
+<hr>
+<div class="card" style="background:#f4f8f5;border-color:#d6e4dd">
+<h2 style="color:#0d2b2e">How they fit together (say this out loud)</h2>
+<ul>
+  <li><b>Model A makes the ghost</b> (the average-player field) → <b>Model B prices the field</b> (expected return yards) → <b>COYOTE = actual price − ghost price</b>, summed per return and averaged per season.</li>
+  <li>No block-grading labels are ever needed — the credit for an <em>unobservable</em> (“how good was that block?”) falls out as a <b>difference of two model predictions</b>.</li>
+</ul>
+</div>
+
+</div>
+</body>
+</html>

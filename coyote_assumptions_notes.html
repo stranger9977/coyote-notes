@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>COYOTE — Assumptions in the write-up & how I'd address them</title>
+<style>
+  :root{--green:#004C54;--ink:#1a2422;--muted:#5f6b68;--rule:#e2e6df;--bg:#fffdf7;--chipbg:#eef4f0;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:17px/1.6 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:48px 28px 96px}
+  h1{font-size:1.85rem;line-height:1.15;margin:0 0 .2rem;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-style:italic;margin:0 0 2rem}
+  h2{font-family:-apple-system,"Segoe UI",sans-serif;font-size:1.06rem;font-weight:700;color:var(--green);
+    margin:2.4rem 0 .2rem;letter-spacing:.005em}
+  h2 .n{display:inline-block;min-width:1.7em;color:#9aa9a4;font-variant-numeric:tabular-nums}
+  .tag{display:inline-block;font-family:-apple-system,"Segoe UI",sans-serif;font-size:.66rem;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--green);background:var(--chipbg);
+    border-radius:999px;padding:.18em .7em;margin-left:.5em;vertical-align:.12em}
+  p.lead{margin:.5rem 0 .3rem;color:#2c3633}
+  ul{margin:.5rem 0 .2rem;padding-left:1.25rem}
+  li{margin:.55rem 0}
+  li ul{margin:.35rem 0 .35rem}
+  li.sub{color:#33403d}
+  b,strong{color:#0d1c1a}
+  em{color:#0d3a3e}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:.85em;background:#eef2ec;padding:.05em .35em;border-radius:4px;color:#0d3a3e}
+  .fix{color:var(--green);font-weight:600}
+  .verdict{background:var(--chipbg);border-left:3px solid var(--green);border-radius:0 8px 8px 0;
+    padding:.5rem .85rem;margin:.6rem 0;font-size:.96rem}
+  hr{border:0;border-top:1px solid var(--rule);margin:2.4rem 0}
+  .foot{color:var(--muted);font-size:.9rem;margin-top:2.4rem}
+  a{color:var(--green)}
+  body{overflow-wrap:break-word}
+  @media(max-width:600px){.wrap{padding:30px 17px 64px}h1{font-size:1.5rem}h2{margin-top:1.9rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>COYOTE — assumptions in the write-up & how I'd address them</h1>
+<p class="sub">Interview notes. Each item: the assumption baked into the paper → what's wrong → the fix.</p>
+
+<h2><span class="n">1.</span> Player ordering — the field is a sorted flat vector <span class="tag">transformer fix</span></h2>
+<p class="lead">Model A centres on a “target player”; both models then list the other players <b>sorted by distance</b> (nearest → furthest) inside one flat feature vector.</p>
+<ul>
+  <li>This forces an <b>arbitrary, unstable ordering</b>. When two players swap distance-rank mid-play, their features jump to <em>different input slots</em>, so the net sees a sudden discontinuity even though nothing meaningful changed — and a player’s <b>identity / role is thrown away</b> by the sort. The net also has to re-learn the same interaction separately at every slot pairing.</li>
+  <li>A <b>transformer (self-attention over the 22 players) doesn’t care about order</b>, and here’s <em>why</em>: it treats the players as a <b>set</b>, applies the <b>same</b> learned weights to every player (weight-sharing), and pools them with a <b>symmetric</b> operation (mean) → <b>permutation-invariant</b> (reshuffle the players and the output is identical). So it needs <b>no sort</b> — it <b>learns</b> who matters via attention (<code>softmax(query·key)</code>), dynamically each frame, instead of relying on a fixed distance ranking.</li>
+</ul>
+
+<h2><span class="n">2.</span> Frozen field state — the counterfactual holds the other 21 players constant</h2>
+<ul>
+  <li>COYOTE swaps the target player to his “average” spot while <b>freezing everyone else</b> — a <em>partial-equilibrium</em> counterfactual. In reality the other 21 would <b>react</b> (a defender re-routes around a missed block; a blocker adjusts), so COYOTE can mis-credit reactions and <b>blocker synergy</b>. The better-but-harder version is a <b class="fix">reactive multi-agent simulator</b> (re-roll the play with all players responding via Model A). <span class="verdict"><b>Is it worth it / is it fine?</b> As a <em>per-frame</em> approximation it’s genuinely defensible — over a single 0.1 s step the field barely moves, so freezing introduces little error. The error <b>compounds over long sequences</b>, so it’s an acceptable v1, but a reactive sim is the clear upgrade if you want a <em>true</em> causal counterfactual and to capture synergy between blockers.</span></li>
+</ul>
+
+<h2><span class="n">3.</span> Arbitrary threshold — Model A uses only the 5 nearest players <span class="tag">transformer fix</span></h2>
+<ul>
+  <li>Model A’s 42 features = <b>target + 5 nearest neighbours</b>. That hard top-5 cutoff is really a <b>scaling hack</b> to bound input size, and it <b>discards anyone past #5</b> — e.g. a defender closing from the far side who’s about to decide the play. A transformer removes the cap: feed <b>all</b> players and let attention learn who’s relevant (a soft, learned “nearest”), so it <b>can care about a player on the opposite side of the field</b> exactly when he matters.
+    <ul>
+      <li class="sub">This improves <b>both</b> models — a more accurate <b>Model A</b> (movement informed by the whole field, not 5 neighbours) <em>and</em> a more accurate <b>Model B</b> — and it pays off most once Model B predicts <b>quantiles / a distribution</b>: capturing the rare far-field defender or the decisive seal is what lets us <b>zero in on the blocks and players that spring explosive (tail) returns</b>, not just the median play.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2><span class="n">4.</span> The 3-yard halo (ε = 3)</h2>
+<ul>
+  <li>When ghosting the target, COYOTE also replaces <b>every player within a 3-yard radius of him</b> with their Model-A “average” position — the idea being to isolate the effect of the <b>immediate halo</b> around the player while holding the rest of the field constant. The 3-yard radius is an <b>unprincipled hand-set threshold</b>: too small misses the real interaction zone of a block, too large contaminates the swap with unrelated players. <span class="verdict">(Separate but related 3-yard rule in the <em>code</em>: COYOTE is <b>zeroed when the player is within 3 yds of the ball carrier</b>, which is what keeps it an <b>off-ball</b> metric — it never credits the carry/tackle itself.) A learned/soft influence region — or just using the attention weights as the “halo” — would be more defensible than a flat 3.</span></li>
+</ul>
+
+<h2><span class="n">5.</span> Point-estimate ghost &amp; mean-only Model B → ghost a <em>distribution</em> <span class="tag">2025 BDB idea</span></h2>
+<p class="lead">Today Model A outputs a <b>single expected position</b> (one ghost point) and Model B is trained with MSE → a <b>single expected-yards number</b>. Problems: value is <b>nonlinear</b>, so plugging in the <em>mean</em> position ≠ the <em>mean</em> of the value (<b>Jensen bias:</b> <code>V(mean) ≠ E[V]</code>); one ghost point can be unrealistic; and you get <b>no uncertainty</b>. The recent Big Data Bowl idea (Yurko / Ferraz “ghosting” with distributions): don’t place <em>one</em> ghost — model a <b>probability distribution over where an average player would be</b> and <b>integrate the value model over it</b>.</p>
+<ul>
+  <li><b class="fix">Ghost a distribution, not a point.</b> Have Model A emit a <b>distribution</b> over the next position (predict a mean + covariance, a mixture, or use a small generative model), then compute <code>COYOTE = f(actual) − E<sub>ghost</sub>[ f(field with target sampled from the ghost-distribution) ]</code> by <b>sampling many ghost positions and averaging Model B</b>. This <b>de-biases</b> the counterfactual (kills the V(mean)≠E[V] error) and gives <b>confidence intervals</b> on each COYOTE/ret instead of a bare number.</li>
+  <li><b class="fix">Pair it with a distributional Model B (quantiles).</b> Swap MSE for a <b>quantile / pinball loss</b> so Model B predicts the <em>distribution</em> of remaining yards (τ0.1 floor … τ0.9 upside), not just the mean. Combined with ghost-sampling, COYOTE can then measure a player’s effect on the <b>tails</b> — i.e. <b>who tilts the probability of an explosive return</b> — the boom/bust signal the point-estimate version averages away.</li>
+  <li><b>How the field actually did it (prior art):</b> <b>Yurko et&nbsp;al. — “NFL&nbsp;Ghosts” (2024)</b> use <b>random-forest conditional density estimation (RFCDE)</b> to model a full <em>2D distribution</em> of where the baseline (“ghost”) defender should be — plus a second density for receiver yards — then grade a real defender by <b>integrating the value model over that ghost density</b> (<code>E[V]</code>, not <code>V(mean)</code>). <b>Ferraz — “Ghostbusters” (Big Data Bowl 2026 winner)</b> applies the same distributional-ghost idea to defenders <b>while the ball is in the air</b>, scoring coverage by comparing actual movement to a <em>distribution</em> of expected ghost positions. So the ladder is: <b>COYOTE = the cheap end</b> (point ghost + mean) → <b>Yurko / Ferraz = the distributional upgrade</b> → a <em>reactive</em> ghost (others respond) is the rung above both.</li>
+</ul>
+
+<h2><span class="n">6.</span> Punts and kickoffs are pooled into one model</h2>
+<ul>
+  <li>One Model B is trained on <b>both</b> return types, but punts and kickoffs are <b>different regimes</b> — different geometry, blocking schemes, and returner depth — and <b>~62% of frames are kickoffs</b>, so the punt signal gets drowned out. <b class="fix">Split into two models (or condition Model B on play type)</b> so each return type is graded on its own dynamics.</li>
+</ul>
+
+<h2><span class="n">7.</span> All return-team blockers are ranked in one bucket — split by role</h2>
+<ul>
+  <li>COYOTE/ret lumps every blocker together, but <b>roles differ enormously</b> — on punts especially, a <b>jammer / vise</b> pressing the gunner at the line does a fundamentally different job than a <b>downfield punt-return blocker</b> springing the returner. Ranking them on one leaderboard is apples-to-oranges. <b class="fix">Grade within role</b> (role-specific leaderboards) to make ratings fair, more interpretable, and to surface undervalued specialists a pooled ranking would hide.</li>
+</ul>
+
+<hr>
+<p class="foot">Concept refreshers (loss function, ReLU, feed-forward, transformer, the bar-fight analogy, etc.) are on the separate <b>Concepts cheat sheet</b> page.</p>
+
+</div>
+</body>
+</html>
