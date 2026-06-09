@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#004C54">
+<title>My work — and the assumptions I'd defend</title>
+<style>
+  :root{--green:#004C54;--green2:#0d3a3e;--ink:#16201f;--muted:#5f6b68;--rule:#e2e6df;--bg:#fffdf7;--chipbg:#eef4f0;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);overflow-x:hidden;overflow-wrap:break-word;
+    font:17px/1.55 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;-webkit-font-smoothing:antialiased}
+  .top{background:var(--green);color:#eaf2ee;padding:40px 20px 26px}
+  .top .in{max-width:780px;margin:0 auto}
+  a.back{display:inline-block;font-family:-apple-system,"Segoe UI",sans-serif;font-size:.8rem;color:#9fc0b8;text-decoration:none;margin-bottom:.4rem}
+  .kick{font-family:-apple-system,"Segoe UI",sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#9fc0b8;margin:0 0 .5rem}
+  h1{font-family:-apple-system,"Segoe UI",sans-serif;font-size:2rem;font-weight:800;margin:0;color:#fff}
+  .tag{font-style:italic;color:#cfe0d8;margin:.45rem 0 0;font-size:1.02rem}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 18px 80px}
+  .proj{border:1px solid var(--rule);border-radius:14px;background:#fff;padding:.2rem 1.15rem 1.1rem;margin:1.4rem 0}
+  .acro{border-bottom:1px solid var(--rule);margin:0 -1.15rem 0;padding:1.1rem 1.15rem .9rem;background:#f6f9f6;border-radius:14px 14px 0 0}
+  .acro .big{font-family:-apple-system,"Segoe UI",sans-serif;font-size:2.1rem;font-weight:900;letter-spacing:.06em;color:var(--green);line-height:1}
+  .acro .exp{font-family:-apple-system,"Segoe UI",sans-serif;font-size:.92rem;color:#33403d;margin-top:.35rem;letter-spacing:.01em}
+  .acro .exp b{color:var(--green);font-weight:800}
+  .acro .what{font-size:1rem;color:#26302e;margin:.5rem 0 0;line-height:1.5}
+  h3{font-family:-apple-system,"Segoe UI",sans-serif;font-size:.82rem;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.07em;margin:1.2rem 0 .35rem}
+  ul{margin:.3rem 0;padding-left:1.2rem}
+  li{margin:.4rem 0;line-height:1.48}
+  b,strong{color:#0d1c1a} em{color:#0d3a3e}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:.85em;background:#eef2ec;padding:.05em .35em;border-radius:4px;color:#0d3a3e}
+  .asm{margin:.55rem 0;padding-left:.85rem;border-left:3px solid #d8ddd5}
+  .asm .a{font-weight:700;color:#0d1c1a}
+  .asm .fix{display:block;font-family:-apple-system,"Segoe UI",sans-serif;font-size:.9rem;color:#1a4d44;margin-top:.2rem;line-height:1.45}
+  .asm .fix::before{content:"↳ DEFEND / FIX  ";font-weight:800;font-size:.66rem;letter-spacing:.05em;color:var(--green)}
+  .we{background:var(--chipbg);border:1px solid #cfe0d8;border-radius:10px;padding:.6rem .95rem .8rem;margin:.6rem 0}
+  .we .step{font-weight:700;color:var(--green2);margin:.5rem 0 .1rem}
+  .formula{font-family:ui-monospace,Menlo,monospace;font-size:.86rem;background:#0d2b2e;color:#cfe6e2;padding:.5rem .7rem;border-radius:7px;margin:.3rem 0;overflow-wrap:break-word;line-height:1.6}
+  table{border-collapse:collapse;width:100%;font-family:-apple-system,"Segoe UI",sans-serif;font-size:.9rem;margin:.4rem 0}
+  th,td{text-align:left;padding:.4em .55em;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:2px solid var(--ink)}
+  td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tr.hi td{background:#e7f0ec;font-weight:700}
+  .src{font-family:-apple-system,"Segoe UI",sans-serif;font-size:.74rem}
+  .src a{color:var(--green)}
+  .note{background:#f4f6f2;border:1px solid var(--rule);border-radius:10px;padding:.7rem .95rem;margin:.6rem 0 0;font-size:.85rem;color:var(--muted);line-height:1.5}
+  @media(max-width:600px){h1{font-size:1.6rem}.wrap{padding:20px 14px 64px}.acro .big{font-size:1.7rem}table{font-size:.82rem}}
+</style>
+</head>
+<body>
+  <div class="top"><div class="in">
+    <a class="back" href="index.html">‹ COYOTE notes</a>
+    <p class="kick">My projects · defend the assumptions</p>
+    <h1>My work — and the assumptions I'd defend</h1>
+    <p class="tag">For each project: what it is, what it found, and the holes I'd poke in it before they do.</p>
+  </div></div>
+  <div class="wrap">
+
+  <!-- ===================== PASTA ===================== -->
+  <div class="proj">
+    <div class="acro">
+      <div class="big">PASTA</div>
+      <div class="exp"><b>P</b>ath <b>A</b>nalysis via <b>S</b>warm-<b>T</b>ackle <b>A</b>ccuracy</div>
+      <p class="what">Grades how well a defensive <b>secondary "swarms" to the ball</b> to limit yards after catch — inspired by DeMeco Ryans' swarm philosophy, built with <b>swarm intelligence (Particle Swarm Optimization)</b>.</p>
+    </div>
+
+    <h3>How it works</h3>
+    <ul>
+      <li><b>Particle Swarm Optimization (PSO):</b> treat each defender as a particle; the objective is to <b>minimize distance to a "swarm point" T</b> on the ball-carrier's path.</li>
+      <li><b>Target selection (T):</b> the best reachable point along the carrier's path, scored by each defender's <b>distance and pursuit angle</b> (points no one can reach given a min velocity → score ∞, removed).</li>
+      <li><b>Error = Fréchet distance</b> between a defender's <em>actual</em> path and the <em>PSO-suggested</em> path (the "leash length" between the two curves).</li>
+      <li><b>The metric:</b> <code>PASTA = YUX / Fréchet distance</code>, where <b>YUX</b> = Yards-after-catch Under eXpected (Expected YAC − Actual YAC). Higher = stayed near the optimal path <em>and</em> limited YAC.</li>
+    </ul>
+
+    <h3>What it found</h3>
+    <ul>
+      <li>Fréchet distance correlates <b>negatively</b> with YUX — secondaries closer to the optimal path give up less YAC. CBs have the largest Fréchet (they cover the most field).</li>
+      <li>Team board: <b>Titans #1</b>, DeMeco Ryans' <b>49ers top-5</b> — both hustle-minded staffs, hinting at a <b>coachable</b> component.</li>
+    </ul>
+
+    <h3>Assumptions to defend</h3>
+    <div class="asm"><span class="a">The PSO path is "optimal."</span> PSO is stochastic (random terms) and the params are unprincipled — inertia = the golden ratio, φ₁=φ₂ untuned, V<sub>min</sub> = the carrier's average velocity.
+      <span class="fix">It's a defensible physics-of-reachability heuristic; I'd tune the params, use player-specific speed profiles, and report path stability across random seeds.</span></div>
+    <div class="asm"><span class="a">A single static target on a moving ball-carrier.</span> The runner cuts and reacts; one fixed point oversimplifies the pursuit (I flagged this as a limitation).
+      <span class="fix">Move to a moving-target PSO so T updates as the carrier's path develops.</span></div>
+    <div class="asm"><span class="a">Fréchet distance = "error."</span> It's a worst-point path-shape measure — it ignores timing/speed and can't tell a mistake from a justified deviation (a DB peeling off to cover a checkdown looks like "error").
+      <span class="fix">Add a time-aligned or area-between-curves measure and condition on the defender's actual assignment.</span></div>
+    <div class="asm"><span class="a">PASTA = YUX ÷ Fréchet is an unstable ratio.</span> It blows up as Fréchet → 0, flips sign when YUX is negative, and divides a play outcome by a path metric.
+      <span class="fix">Use a standardized/regression form, winsorize, or model YUX additively with path-deviation as a predictor.</span></div>
+    <div class="asm"><span class="a">Correlation, not causation.</span> The YUX↔path link is only moderate; good defenses may <em>both</em> follow good paths and limit YAC (talent confound) — path-following might be a symptom, not the cause.
+      <span class="fix">Control for coverage, defender talent, and play context; test whether path-deviation predicts YUX <em>within</em> player/team.</span></div>
+    <div class="asm"><span class="a">Scope &amp; dependencies.</span> Secondary only, pass plays only, weeks 1–9 of 2022; YUX inherits any error in nflfastR's expected-YAC model; reliability/year-to-year stability isn't shown.
+      <span class="fix">Expand the sample, run split-half reliability, and stress the xYAC dependency.</span></div>
+    <p class="src">Source: <a href="https://www.kaggle.com/code/brochillington/pasta" target="_blank" rel="noopener">PASTA on Kaggle ↗</a></p>
+  </div>
+
+  <!-- ===================== CAMO ===================== -->
+  <div class="proj">
+    <div class="acro">
+      <div class="big">CAMO</div>
+      <div class="exp"><b>C</b>overage <b>A</b>ssignment <b>M</b>isclassification <b>O</b>wnership</div>
+      <p class="what">Measures how much <b>each defender contributes to disguising the coverage</b> pre-snap — by training a <b>transformer</b> to read coverage and mining its <b>attention</b> on the plays it gets fooled.</p>
+    </div>
+
+    <h3>How it works</h3>
+    <ul>
+      <li><b>Transformer over the 22 players as a set</b> (6 features each: x, y, vx, vy, orientation-to-QB, team side) → classifies <b>1 of 8 coverages</b> each frame (adapted SumerSports framework). Adding QB orientation alone lifted accuracy 7–10%.</li>
+      <li><b>Accuracy:</b> line-set→ball-snap window ~79–83% top-2; by the forward pass ~92–94% — strong enough that remaining misses are plausibly <em>designed disguise</em>.</li>
+      <li><b>The metric:</b> <code>CAMO = MR × (player's attention share) × 100</code>, where <b>MR</b> = the play's misclassification rate. It's the share of the model's attention a player draws <em>on plays where the defense fooled it</em>.</li>
+    </ul>
+
+    <h3>What it found</h3>
+    <ul>
+      <li><b>Bills</b> top the misclassification board (fool the model 56.7% of pre-snap frames). Top player <b>Andre Cisco</b> (22.7% of his team's fooled frames). <b>Spagnuolo's Chiefs</b> top-3 — good face validity.</li>
+      <li><b>Motion lowers misclassification</b> — it helps the offense expose coverage; elite (low-CPOE) offenses fool the model more.</li>
+    </ul>
+
+    <h3>Assumptions to defend</h3>
+    <div class="asm"><span class="a">Misclassification = designed disguise.</span> The core leap: the model being fooled ≈ the defense successfully disguising. But the model can just be <em>wrong/limited</em> (capped by data &amp; labels), not deceived.
+      <span class="fix">Lean on face validity (good DCs rank high) and the <b>orientation ablation</b> — manually spinning a safety tanks accuracy, so the model keys on disguise-relevant cues. Then validate against coach-tagged disguise plays.</span></div>
+    <div class="asm"><span class="a">Attention = responsibility.</span> Assumes the transformer's attention faithfully says <em>who</em> caused the disguise — but attention isn't always a faithful explanation.
+      <span class="fix">I already ablate (orientation spin); add integrated-gradients / attention-rollout checks and validate against ground truth before calling it "ownership."</span></div>
+    <div class="asm"><span class="a">Human-labeled, 8-bucket coverage.</span> Accuracy is capped by label quality, and real coverages don't fit cleanly in 8 boxes.
+      <span class="fix">Acknowledge the ceiling; report top-2 accuracy; treat fuzzy labels as a noise floor, not model failure.</span></div>
+    <div class="asm"><span class="a">Eight weeks of 2022 data.</span> Small, single-season — generalizability is unproven, and the model struggles in crowded box areas.
+      <span class="fix">Expand seasons; check stability; flag box-heavy plays as lower-confidence.</span></div>
+    <div class="asm"><span class="a">MR × attention mixes levels &amp; only credits misses.</span> A play-level rate times a frame-level attention share; players who disguise on <em>correctly</em>-read plays get nothing.
+      <span class="fix">Report components separately; consider crediting attention on "near-miss" (low-margin) correct plays too.</span></div>
+    <div class="asm"><span class="a">Does disguise actually help the defense?</span> The link to offensive outcomes (CPOE) is indirect/correlational.
+      <span class="fix">Tie CAMO to EPA/CPOE allowed <em>within</em> matchups to show disguise has real value, not just model confusion.</span></div>
+    <p class="src">Source: <a href="https://www.kaggle.com/code/brochillington/camo-the-art-of-pre-snap-disguise" target="_blank" rel="noopener">CAMO on Kaggle ↗</a></p>
+  </div>
+
+  <!-- ===================== DRAFT SHARPE ===================== -->
+  <div class="proj">
+    <div class="acro">
+      <div class="big">DRAFT SHARPE</div>
+      <div class="exp">Risk-adjusted draft value — a <b>Sharpe ratio</b> for the NFL draft</div>
+      <p class="what">Treats a draft pick like an <b>investment</b>: the "return" is rookie-contract surplus + the second-contract the market gives him; the "risk-free alternative" is just <b>signing a starter in free agency</b>. The ratio = expected value over that alternative, per unit of bust risk.</p>
+    </div>
+
+    <h3>The formulas</h3>
+    <div class="formula">Rookie Surplus = Snap Ratio × (FA Replacement Cost − Rookie Salary) × 4 yrs
+Player Return = 2nd-Contract Cap% + Rookie Surplus
+Sharpe = ( P(elite) × Elite Threshold − FA Replacement Cost ) / SD(Player Return)</div>
+
+    <h3>Worked example <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— "is it all percentages?" → yes</span></h3>
+    <div class="we">
+      <p style="margin:.2rem 0 .5rem">Everything is in <b>cap %</b> (percent of the salary cap) <em>except</em> <b>P(elite)</b>, which is a probability (0–1). So the units line up: cap% − cap% = cap%, then ÷ cap% (the SD) = a unitless ratio. That's why you can subtract "FA cost" from "P(elite) × threshold" — both are cap%.</p>
+      <p class="step">Step 1 — one player's return · Josh Allen (QB, pick #7, 2018)</p>
+      <ul style="margin-top:.2rem">
+        <li>Snap ratio = 92.1% snaps ÷ hit threshold = <b>1.48×</b> (≥1.0 = starter)</li>
+        <li>Rookie surplus = 1.48 × (14.6% FA cost − 3.0% rookie pay) × 4 yrs = <b>68.7%</b></li>
+        <li>Player return = 68.7% surplus + 23.6% 2nd contract = <b>92.3%</b></li>
+      </ul>
+      <p class="step">Step 2 — the position-bucket Sharpe (top-10 picks, 2010–22)</p>
+      <table>
+        <tr><th>Step</th><th class="n">QB</th><th class="n">RB</th></tr>
+        <tr><td>P(elite) — % of picks that hit top-10% returns</td><td class="n">73.1%</td><td class="n">0.0%</td></tr>
+        <tr><td>× Elite threshold (90th-pct return = 33.1%) = <em>expected payoff</em></td><td class="n">24.2%</td><td class="n">0.0%</td></tr>
+        <tr><td>− FA replacement cost (buy a starter instead)</td><td class="n">−14.6%</td><td class="n">−6.0%</td></tr>
+        <tr><td>= numerator (expected value <em>over</em> replacement)</td><td class="n">9.6%</td><td class="n">−6.0%</td></tr>
+        <tr><td>÷ SD of returns (incl. busts at $0)</td><td class="n">25.7%</td><td class="n">9.7%</td></tr>
+        <tr class="hi"><td>= Sharpe</td><td class="n">0.37</td><td class="n">−0.62</td></tr>
+      </table>
+      <p style="margin:.4rem 0 .2rem;font-size:.95rem">Read it: a top-10 <b>QB</b> returns <b>+0.37</b> of risk-adjusted value over signing a free agent; a top-10 <b>RB</b> is <b>−0.62</b> — you'd be better off buying one.</p>
+    </div>
+
+    <h3>What it found</h3>
+    <ul>
+      <li><b>Premium positions win round 1:</b> QB leads the top-10 (<b>0.37</b>); EDGE peaks in the late first (<b>0.59</b>); OT and WR also strong. <b>RB is the worst</b> first-round bet — negative at every tier (−0.62 in the top 10).</li>
+    </ul>
+
+    <h3>Counter-analysis (Part 2 — I stress-tested it myself)</h3>
+    <ul>
+      <li><b>Roster need:</b> picks that fill a real hole average a need-adjusted Sharpe of <b>+0.057</b> vs <b>−0.139</b> for already-filled positions — context matters.</li>
+      <li><b>Class depth:</b> using NGS pre-draft scores, count "Good+" prospects per class (depth ↔ hit rate, r = 0.42). <b>2026 RB is the thinnest in years</b> — Jeremiyah Love is the only Elite RB, a 17-pt gap to RB2.</li>
+      <li><b>Prospect talent:</b> pre-draft elite prospects (top-10% NGS) become starters <b>53.5% vs 13.5%</b>. The averages hide the studs.</li>
+      <li><b>Hot take:</b> Love's 90th-pct outcome crosses the premium-surplus line ~<b>pick 14</b>; the <b>Vikings at 18</b> are the cleanest fit. For everyone else, the rule holds: <b>draft a premium position</b>.</li>
+    </ul>
+
+    <h3>Assumptions to defend</h3>
+    <div class="asm"><span class="a">Snap % = quality.</span> Playing time is a volume proxy — a player can play a lot and be bad.
+      <span class="fix">Swap to PFF grades or EPA for production-weighted returns.</span></div>
+    <div class="asm"><span class="a">Second contract = market value, and FA pool includes extensions.</span> Teams over/underpay, and counting re-signings inflates "replacement cost" for positions stars rarely leave (OT, QB).
+      <span class="fix">Use true open-market (team-change) signings only; track how often starters actually change teams per position.</span></div>
+    <div class="asm"><span class="a">A 4-year window, and $0 for no second contract.</span> Misses year-5+ late bloomers and zeroes out players who contributed but aged out (esp. RBs).
+      <span class="fix">Extend the window / use position-specific development curves; give partial credit for rookie-deal production.</span></div>
+    <div class="asm"><span class="a">One global "elite" bar &amp; uniform class talent.</span> A 90th-pct cutoff across all positions, and every class treated as equally talented.
+      <span class="fix">Position-specific thresholds + draft-class strength controls (the Part-2 NGS depth work does this).</span></div>
+    <div class="asm"><span class="a">Cap% is the cross-era comparator.</span> It ignores structural cap jumps (new TV deals).
+      <span class="fix">Adjust for cap-growth between eras.</span></div>
+    <div class="asm"><span class="a">QB is treated like any position.</span> The math says QB is the best top-10 bet "on average" — but NCAA→NFL projection is brutally hard and the bust variance is enormous.
+      <span class="fix">Apply an explicit QB bust-rate discount; the SD already partly captures it, but make the variance explicit. (The math still favors taking the swing.)</span></div>
+    <p class="note"><b>Strong framing for the room:</b> I don't just list these — Part&nbsp;2 already <em>addresses</em> three of them (roster need, class depth, prospect talent). "I anticipated the obvious objections and built the counter-analysis" is a better answer than any single defense.</p>
+    <p class="src">Sources: <a href="https://stranger9977.github.io/draft-sharpe-analysis/analysis.html" target="_blank" rel="noopener">Part 1 — the analysis ↗</a> · <a href="https://stranger9977.github.io/draft-sharpe-analysis/counter_analysis.html" target="_blank" rel="noopener">Part 2 — stress test ↗</a></p>
+  </div>
+
+  <p class="note">Private notes · not indexed. These are my own projects (PASTA &amp; CAMO = NFL Big Data Bowl; Draft Sharpe = personal research).</p>
+
+  </div>
+</body>
+</html>
